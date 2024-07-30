@@ -1,0 +1,48 @@
+library(readr)
+library(tidyverse)
+
+# Load necessary library
+library(tidyverse)
+
+# Read in the state-level data
+state_data <- read_csv("US_state_economic_data_1980_2018.csv")
+
+# Select relevant columns and merge
+state_data_merged <- state_data %>%
+  select(state, year, Unemploymentrate, Population) 
+
+# Aggregate data by state and calculate average unemployment rate
+collapsed_data <- state_data_merged %>%
+  group_by(state) %>%
+  summarize(avg_rate = mean(Unemploymentrate))
+
+# Create binary indicator for years after 2000
+state_data_merged <- state_data_merged %>%
+  mutate(after_2000 = year >= 2000)
+
+# Aggregate data by state and after_2000, calculate average unemployment rate
+collapsed_data_2 <- state_data_merged %>%
+  group_by(state, after_2000) %>%
+  summarize(avg_rate = mean(Unemploymentrate))
+
+# Read in national unemployment data.
+unemployment_national <- read_csv("us_unemployment_rate_1948_2021.csv")
+
+# Create histograms (with improved visuals and labels)
+p1 <- ggplot(unemployment_national, aes(x = UNRATE)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of U.S. Unemployment Rates (1948-2021)",
+       x = "Unemployment Rate",
+       y = "Frequency") +
+  theme_minimal()
+
+# Create a comparison histogram.
+p2 <- ggplot(collapsed_data_2, aes(x = avg_rate, fill = after_2000)) +
+  geom_histogram(binwidth = 0.5, position = "identity", alpha = 0.6) + # Adjusted binwidth for state data
+  labs(title = "Average State Unemployment Rates: Before vs. After 2000",
+       x = "Average Unemployment Rate",
+       y = "Frequency",
+       fill = "Year") +
+  scale_fill_manual(values = c("skyblue", "salmon")) + 
+  theme_minimal()
+
